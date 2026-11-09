@@ -24,16 +24,18 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Expected result: `pytest` passes 22 tests (the import tests, the type tests and the pre-check tests), and both `ruff` commands report no problem.
+Expected result: `pytest` passes 134 tests (the config, core, adapter, type, pre-check and import tests), and both `ruff` commands report no problem.
 
 ## Layout
 
 | Path | Purpose |
 |------|---------|
-| `src/llm_adapter/core.py` | `complete()`, the alias table, the retry and failover loop, `on_usage`, `validate()` |
+| `src/llm_adapter/config.py` | `load_config(path)`, `validate()` and `resolve_alias()`: the YAML config, `${VAR}` resolution and the startup checks (D10, D18, D33) |
+| `src/llm_adapter/core.py` | `Core.complete()`, the per-class retry schedule, `Retry-After`, failover, `on_usage` and the pre-check call |
 | `src/llm_adapter/types.py` | `Request`, `Response`, `Usage`, `Attempt`, `UsageEvent`, `ErrorClass`, the exceptions and the adapter `Protocol` |
 | `src/llm_adapter/precheck.py` | The local prompt-size estimate and the check against the alias's `context_window` (D34) |
-| `src/llm_adapter/adapters/` | Empty modules: `anthropic`, `openai`, `gemini`, `openai_compat`. Version 1 builds `anthropic` and one Responses adapter that serves OpenAI and Gemini. `openai_compat` (the custom endpoint) is v2. |
+| `src/llm_adapter/adapters/anthropic.py` | The Anthropic Messages adapter. The SDK's retries are off (AT-6) |
+| `src/llm_adapter/adapters/responses.py` | The one Responses adapter that serves OpenAI and Gemini (ADR 0001). The SDK's retries are off (AT-6) |
 | `scripts/check_gemini_usage.py` | Live check, run by hand with a real Gemini key. `--list` shows the Gemini models. It prints usage field names only (task T4) |
 | `tests/` | Tests. Provider behaviour is tested against a mock HTTP layer |
 | `docs/requirements.md` | The requirements and the decisions. This is the single source |
