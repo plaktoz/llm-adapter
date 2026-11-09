@@ -68,6 +68,10 @@ Note: decision D3 refines the "Providers" line. Gemini goes through the OpenAI S
 | D40 | Core factory | `build_core(config, adapters)` builds a `Core` from a `Config`. `build_adapters(config, http_client)` builds one adapter per provider from its `wire_api`. `Core.complete` stays the entry point, and `build_core` is the way to construct it from configuration. Approved 2026-11-09 as recommended. | 2026-11-09 |
 | D41 | HTTP 404 | A 404 is `invalid_request`. It is raised at once, with no retry and no failover (D20). Both adapters do this. Approved 2026-11-09 as recommended. | 2026-11-09 |
 | D42 | Anthropic default `max_tokens` (section 2) | When the caller gives no `max_output_tokens`, the Anthropic adapter sends `max_tokens` 4096, because the Messages API requires the field. The value is the smallest safe default. Approved 2026-11-09 as recommended. | 2026-11-09 |
+| D43 | SDK drift check | One test file, `tests/test_sdk_drift.py`, asserts the SDK facts this spec rests on: the default retry count, the error types `classify` maps, and the usage fields the adapters read. It runs in the existing CI. A pin bump that moves one of them fails its PR. No separate job, and no key in CI. Approved 2026-11-09. | 2026-11-09 |
+| D44 | Specialist tools | A specialist is given the tools it needs, and the set is configurable. This is a requirement for v2 tool calling (D8), not for v1. Until then, a specialist that needs a tool cannot use the library. The config shape for a per-specialist tool set is not designed. Stated by the owner 2026-11-09. | 2026-11-09 |
+| D45 | Gemini overflow body | Accepted as an unverified risk. The Gemini overflow markers stay guesses. The pre-check (D34) rejects a prompt over the alias's window before any call, so the provider reply is a second line of defence. Approved 2026-11-09. | 2026-11-09 |
+| D46 | CI platforms | CI runs the checks on Linux, Windows and macOS. Approved 2026-11-09. | 2026-11-09 |
 
 ## 1. Interface
 
@@ -298,7 +302,7 @@ Callers are Python code in the host application. They call the library for coord
 | Triage Agent | `complete` | |
 | System Patrol | `complete` | Named only in a summary table. No detailed design yet. |
 | Project Monitors | `complete` | Named only in a summary table. No detailed design yet. |
-| Non-editing specialist agents | `complete` | Open. Not yet decided by the design. |
+| Non-editing specialist agents | `complete` | Decided (D26, D44). They call `complete` with the `default` alias. The owner wants each specialist to be given the tools it needs, set in config. That needs tool calling, which is v2 (D8). |
 | Usage glue to the usage ledger | `on_usage` | |
 | Startup check | `validate()` | The only call site in the design. |
 

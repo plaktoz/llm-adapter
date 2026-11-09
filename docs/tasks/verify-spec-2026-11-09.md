@@ -103,9 +103,14 @@ All are unverified. Several come from memory of the SDKs, not from source.
 | F8 | Whether the Anthropic usage object reports cached and cache-write tokens, and under which names | Section 2 |
 | F9 | What the SDK does when the response has no usage object | D14 |
 
-## Later work, not a task yet
+## Open items, closed on 2026-11-09
 
-A drift check that reruns the fixture capture when an SDK pin changes, and fails if a retry default, an error type or a usage field has moved. It needs a CI job and a rule that a failing check blocks SDK upgrades. The owner decides this after the conformance suite exists.
+The owner decided these four on 2026-11-09. Each is recorded in `docs/requirements.md`.
+
+- [x] **Drift check (D43).** `tests/test_sdk_drift.py`, in the existing CI. 19 tests. Verified: they pass on `anthropic` 2.6.0 and `openai` 3.46.0, and 4 of them fail when the expected facts are changed (a mutation check, run locally).
+- [x] **CI platforms (D46).** The workflow runs on Linux, Windows and macOS. State: the matrix is in `.github/workflows/ci.yml`. Verified by the CI run on the PR that adds it.
+- [x] **Gemini overflow body (D45).** Accepted as an unverified risk. No probe was run.
+- [x] **Specialist agents (D44).** The owner wants each specialist given the tools it needs, set in config. This needs v2 tool calling (D8), so v1 does not change. The config shape for a per-specialist tool set is not designed. Waits for: the owner's decision on whether tool calling stays in v2.
 
 ## Still unverified
 
