@@ -27,11 +27,11 @@ allowed_models:
 
 aliases:
   default:
-    context_window: 1000000
+    context_window: 272000
     primary:  { provider: anthropic, model: "${ANTHROPIC_MODEL}" }
     fallback: { provider: openai,    model: "<model id>" }
   deep:
-    context_window: 1000000
+    context_window: 272000
     primary:  { provider: anthropic, model: "${ANTHROPIC_MODEL}" }
     fallback: { provider: openai,    model: "<model id>" }
   planner:
@@ -117,11 +117,11 @@ def test_sample_config_parses_with_the_proposed_windows(tmp_path: Path, fake_env
 
     validate(config)
     windows = {name: alias.context_window for name, alias in config.aliases.items()}
-    assert windows == {"default": 1000000, "deep": 1000000, "planner": 1000000}
+    assert windows == {"default": 272000, "deep": 272000, "planner": 1000000}
 
 
 def test_validate_rejects_alias_without_context_window(tmp_path: Path, fake_env: None) -> None:
-    no_window = SAMPLE.replace("    context_window: 1000000\n", "", 1)
+    no_window = SAMPLE.replace("    context_window: 272000\n", "", 1)
     config = load_config(write(tmp_path / "no_window.yaml", no_window))
 
     with pytest.raises(ConfigError, match="default"):

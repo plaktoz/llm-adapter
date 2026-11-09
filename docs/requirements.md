@@ -60,7 +60,7 @@ Note: decision D3 refines the "Providers" line. Gemini goes through the OpenAI S
 | D32 | Dependency pins | Latest release on PyPI at the time of the check, unless it cannot be used. Approved on 2026-11-09: `anthropic` 2.6.0, `openai` 3.46.0, `PyYAML` 6.0.3, `httpx2` 2.16.0. | 2026-11-09 |
 | D33 | Context window per alias (O13) | Each alias has a `context_window`, in tokens, in config. `validate()` raises `ConfigError` for an alias that has none. | 2026-11-09 |
 | D34 | Prompt-size pre-check (O13) | Before any provider call, `complete` estimates the prompt size locally and compares it with the alias's `context_window`. The estimate is the number of characters of `system` and of every message, divided by 4 and rounded up. It adds no dependency. When the estimate is over the window, `complete` raises `ContextOverflow` at once (section 4, D13): no provider call, no `Attempt`, no `on_usage` event, no failover. The estimate is not a usage figure (D14). The module is `precheck.py`. `complete` (B4) calls it. | 2026-11-09 |
-| D35 | `context_window` values | `default`, `deep` and `planner` are set to 1000000 tokens. Their primary is `${ANTHROPIC_MODEL}`. The value is the `max_input_tokens` that the gateway's Models API reports for that model (`claude-advantage-assist`), read on 2026-11-09. It is a value the gateway reports, not a fact about the model family. **Open:** the fallback of `default` and `deep` is `<model id>` in the sample. The repo does not map it, so its limit is unknown. A shared window should be the smaller of the two limits, so 1000000 holds only if the fallback's limit is at least that. The owner confirms the fallback's limit or its mapping before B7. | 2026-11-09 |
+| D35 | `context_window` values | `default` and `deep` are set to 272000 tokens. `planner` is set to 1000000 tokens. Their primary is `${ANTHROPIC_MODEL}`, whose limit the gateway's Models API reports as 1000000 for `claude-advantage-assist` (read on 2026-11-09). A shared window is the smaller of the primary's and the fallback's limits (D35). The fallback of `default` and `deep` is `<model id>` in the sample, unmapped in the repo. The owner chose 272000, the smallest `max_input_tokens` the gateway reports for a GPT model (`gpt-5.1`, read on 2026-11-09), so the window holds for any GPT fallback. A fallback pinned to `gpt-advantage-assist` (1000000) would allow 1000000. | 2026-11-09 |
 | D36 | Connection errors (O14) | A refused, reset or otherwise failed connection, with no HTTP response, is class `timeout`. It retries 2 times, then fails over. Both adapters do this. Section 4 had no class for it. | 2026-11-09 |
 
 ## 1. Interface
@@ -128,15 +128,15 @@ allowed_models:
 
 aliases:
   default:
-    context_window: 1000000  # read from the gateway Models API on 2026-11-09 (D35)
+    context_window: 272000  # smallest GPT limit the gateway reports (D35)
     primary:  { provider: anthropic, model: "${ANTHROPIC_MODEL}" }
     fallback: { provider: openai,    model: "<model id>" }
   deep:
-    context_window: 1000000  # read from the gateway Models API on 2026-11-09 (D35)
+    context_window: 272000  # smallest GPT limit the gateway reports (D35)
     primary:  { provider: anthropic, model: "${ANTHROPIC_MODEL}" }
     fallback: { provider: openai,    model: "<model id>" }
   planner:
-    context_window: 1000000  # read from the gateway Models API on 2026-11-09 (D35)
+    context_window: 1000000  # the primary's limit, as the gateway reports it (D35)
     primary:  { provider: anthropic, model: "${ANTHROPIC_MODEL}" }
     fallback: null
 ```
@@ -344,6 +344,6 @@ The owner answered O1 to O13 on 2026-11-09. Each answer is a decision in the Dec
 | O10 | Other HTTP statuses | D28: the mapping in section 4 | The 413 body test is unverified, like the other overflow tests (F3). |
 | O11 | `Retry-After` forms | D29: all three, capped at 60 s | The date form needs a clock. AT-11 covers it. |
 | O12 | SDK client thread safety | D30: one client per thread | The cost is one connection pool per thread. Not measured. |
-| O13 | Context window per alias | D33: `context_window` per alias, required by `validate()`. D34: `complete` pre-checks the prompt with a local estimate (characters divided by 4) and raises `ContextOverflow`. D35: 1000000 for the three aliases, from the gateway for the primary. | The fallback's limit is unknown (D35). The estimate is rough: it can be off in either direction, and a model's tokenizer is not known to the library. Whether to add a safety margin to the estimate is not decided. |
+| O13 | Context window per alias | D33: `context_window` per alias, required by `validate()`. D34: `complete` pre-checks the prompt with a local estimate (characters divided by 4) and raises `ContextOverflow`. D35: 272000 for `default` and `deep`, 1000000 for `planner`. The fallback's limit is the one the owner chose the window from (D35). | The fallback model is not named in the repo, so its real limit is unknown (D35). The estimate is rough: it can be off in either direction, and a model's tokenizer is not known to the library. Whether to add a safety margin to the estimate is not decided. |
 
 Other unverified items: the Mermaid diagram in section 5 (`mmdc` is not installed), and the context-overflow body that real servers send (F3). T3 read the SDK source and did not run it.
