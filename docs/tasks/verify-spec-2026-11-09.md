@@ -30,10 +30,10 @@ Mark the state next to each task: `[ ]` open, `[x]` done, `[-]` not done, with t
   - Correction: I first wrote that the architect `default` claim was dropped. That was wrong. The sample in the specialist document does use `default` for the Architect, while the models document uses `deep`. The sample is non-normative.
   - Limits: design documents only, since no caller code exists.
 
-- [ ] **T2. Dependency check.** For `anthropic`, `openai`, PyYAML and one mock HTTP server library, report whether `uv` already has it, the latest version on PyPI, the licence and the date of the last release.
+- [x] **T2. Dependency check.** For `anthropic`, `openai`, PyYAML and one mock HTTP server library, report whether `uv` already has it, the latest version on PyPI, the licence and the date of the last release.
   - Parallel: yes. It is independent of T1.
   - Done when: a table is in this file. The owner approves the list and the pins. Nothing is installed before that approval. If PyPI is not reachable from this machine, record that here.
-  - State: the check is done (2026-11-09, read-only, PyPI was reachable). **Pins approved by the owner on 2026-11-09 ("use the latest versions"): `anthropic` 2.6.0 and `openai` 3.46.0.** This covers only those two. `PyYAML` 6.0.3 was approved the same day (D32). `respx` is dropped (D31). Nothing is added to `pyproject.toml` until the build task that needs it starts.
+  - State: **done** (2026-11-09). The owner confirmed the check on 2026-11-09. The table and pins below stand as written. The check was read-only, and PyPI was reachable. **Pins approved by the owner on 2026-11-09 ("use the latest versions"): `anthropic` 2.6.0 and `openai` 3.46.0.** This covers only those two. `PyYAML` 6.0.3 was approved the same day (D32). `respx` is dropped (D31). Nothing is added to `pyproject.toml` until the build task that needs it starts.
 
     | Package | Here | Latest on PyPI | Released | Licence | Requires-python | Last release within 12 months |
     |---|---|---|---|---|---|---|
