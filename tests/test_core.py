@@ -446,3 +446,21 @@ def test_unknown_alias_is_a_config_error() -> None:
 def test_alias_without_routes_is_a_config_error() -> None:
     with pytest.raises(ConfigError):
         AliasSpec(routes=(), context_window=10)
+
+
+def test_a_raising_on_usage_callback_does_not_lose_the_response(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # D38: the callback fails, the response still returns, and the log names the type only.
+    h = Harness(scripted(ok("kept")))
+
+    def broken(_event: UsageEvent) -> None:
+        raise RuntimeError("SECRET-IN-MESSAGE")
+
+    h.core.on_usage(broken)
+    with caplog.at_level("WARNING"):
+        response = h.core.complete(request())
+    assert response.text == "kept"
+    assert len(h.events) == 1
+    assert "RuntimeError" in caplog.text
+    assert "SECRET-IN-MESSAGE" not in caplog.text
