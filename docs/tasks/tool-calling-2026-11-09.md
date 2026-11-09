@@ -2,7 +2,16 @@
 
 Date: 2026-11-09
 Playbook: `.agents/playbooks/togaf-feature-delivery.md`
-Status: **Step 1 waits for the owner's approval.** No code is changed.
+Status: Step 1 approved. Step 3 (design) in progress.
+
+## Approval
+
+| Item | State |
+|---|---|
+| Step 1: goal, out-of-scope list, done condition (items 1 to 9) | Approved by the owner on 2026-11-09 ("blanket approval given. go") |
+| Tasks of this feature (design, build, verify, land) | Blanket approval, given the same day. It covers every task in this file. |
+| Defaults in the Step 2 table | Taken, since the owner approved without changing them |
+| Merging the final PR | Not covered. The agent asks before it merges. |
 
 ## Step 1. Define done
 
@@ -71,9 +80,11 @@ Points the design must settle in Step 3. I have picked a default for each.
 
 Task cards are written in Step 4, after the design is approved.
 
-- [ ] **Step 1. Owner approves the goal, the out-of-scope list and the done condition.**
-- [ ] Step 2. Understand the affected code. Done above, awaiting Step 1.
+- [x] **Step 1. Owner approves the goal, the out-of-scope list and the done condition.**
+- [x] Step 2. Understand the affected code. Done above.
 - [ ] Step 3. Design with `/architect`, ADR, owner approves.
+  - In progress (2026-11-09). Three design candidates run in parallel, read-only on the repo, each writing to its own scratch folder under `/tmp/sketch-tools/`. The `opus` and `fable` models were rejected by the gateway (HTTP 400 and 403). The gateway does not allow a change of Claude model, so this is now a rule in `AGENTS.md` (section 3). All three candidates now run on the session model, each with a different starting shape to keep them distinct: content blocks, typed turns, and the smallest delta (optional fields on `Message`). I launched the third on `sonnet` first, which breaks the rule. I stopped it and relaunched it with no model set.
+  - Next: compare the three against the design red flags, synthesise one design, write the ADR as `docs/adr/0002-tool-calling.md`, then commit the sketch. Under the blanket approval, no owner checkpoint is needed before Step 4.
 - [ ] Step 4. Task cards.
 - [ ] Step 5. Build.
 - [ ] Step 6. Verify and review.

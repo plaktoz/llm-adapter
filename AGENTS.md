@@ -34,6 +34,7 @@ How a piece of work goes from request to done. Follow the steps in order.
 
 - If a task or subtask is independent, send it to a subagent. Give each independent task its own subagent, and start them in one message so they run in parallel.
 - Do not send a task to a subagent when it is small or when it depends on another task's output.
+- The LLM gateway does not allow a change of Claude model. Never set a `model` on a subagent or choose a model per role. Every subagent runs on the session's model. A request for a different model is rejected by the gateway (HTTP 400 or 403) and the subagent fails without doing any work. To get different designs or reviews, give each subagent a different brief, not a different model.
 - When a task does not run in parallel, write the reason next to the task in the task list. Name what it waits for: the task, and the output or decision it needs. For a small task, say that it is small.
 - A subagent in its own worktree commits its work on its branch before it reports done. Uncommitted, untracked and ignored files exist only in the worktree folder, and they are lost when the worktree is removed.
 - The subagent then pushes the branch, if the user approved pushing, or reports the branch name and the worktree path.
