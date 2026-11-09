@@ -246,6 +246,7 @@ def test_missing_stop_reason_is_empty_string() -> None:
         (401, "authentication_error", ErrorClass.AUTH),
         (403, "permission_error", ErrorClass.AUTH),
         (422, "invalid_request_error", ErrorClass.INVALID_REQUEST),
+        (404, "not_found_error", ErrorClass.INVALID_REQUEST),
         (400, "invalid_request_error", ErrorClass.INVALID_REQUEST),
     ],
 )
@@ -259,13 +260,13 @@ def test_classify_413_without_overflow_body_is_invalid_request() -> None:
 
 
 def test_classify_413_with_overflow_body_is_context_overflow() -> None:
-    # Hand-written body, unverified against a real server (F3).
+    # Phrase verified by a live probe on 2026-11-09 (F3). The full text here is written, not copied.
     message = "prompt is too long: 300000 tokens > 200000 maximum"
     assert _classify_status(413, "request_too_large", message) is ErrorClass.CONTEXT_OVERFLOW
 
 
 def test_classify_400_with_overflow_body_is_context_overflow() -> None:
-    # Hand-written body, unverified against a real server (F3).
+    # Phrase verified by a live probe on 2026-11-09 (F3). The full text here is written, not copied.
     message = "prompt is too long: 300000 tokens > 200000 maximum"
     assert _classify_status(400, "invalid_request_error", message) is ErrorClass.CONTEXT_OVERFLOW
 
@@ -296,10 +297,12 @@ def test_classify_connection_error_is_timeout() -> None:
     assert adapter.classify(info.value) is ErrorClass.TIMEOUT
 
 
-def test_classify_rejects_a_non_sdk_exception() -> None:
+def test_classify_re_raises_a_non_sdk_exception() -> None:
     adapter, _ = _adapter(lambda _r: httpx2.Response(200, json=_message_body(usage=None)))
-    with pytest.raises(TypeError, match="ValueError"):
-        adapter.classify(ValueError("bug"))
+    bug = ValueError("bug")
+    with pytest.raises(ValueError) as info:
+        adapter.classify(bug)
+    assert info.value is bug
 
 
 # --- Secrets (section 6, AT-5) -------------------------------------------------------------

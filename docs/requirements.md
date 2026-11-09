@@ -53,15 +53,21 @@ Note: decision D3 refines the "Providers" line. Gemini goes through the OpenAI S
 | D25 | Gemini usage fields (O7) | Map the Responses usage fields. When a field is missing, leave usage absent (D14). The live check (T4) confirmed the fields on 2026-11-09. | 2026-11-09 |
 | D26 | Specialists (O8) | Not blocking. If specialist agents use the library, they use `complete` with the `default` alias, so v1 does not change. | 2026-11-09 |
 | D27 | Spent-quota 429 (O9) | No separate class. Every 429 follows the `rate_limited` schedule in section 4. | 2026-11-09 |
-| D28 | Other HTTP statuses (O10) | 408 is `timeout`. 409 and 529 are `server_error`. 422 is `invalid_request`. 413 is a `context_overflow` when the body says so, else `invalid_request`. | 2026-11-09 |
+| D28 | Other HTTP statuses (O10) | 408 is `timeout`. 409 and 529 are `server_error`. 422 and 404 are `invalid_request` (D41). 413 is a `context_overflow` when the body says so, else `invalid_request`. | 2026-11-09 |
 | D29 | `Retry-After` forms (O11) | Read `retry-after-ms`, then seconds, then an HTTP date. The 60 s cap of D21 applies to all three. A value that cannot be parsed is ignored, and the schedule step applies. | 2026-11-09 |
 | D30 | SDK clients and threads (O12) | Each thread builds and keeps its own SDK client. No client is shared between threads. | 2026-11-09 |
 | D31 | Mock for tests | `httpx2.MockTransport`, passed to each SDK client as its `http_client`. It adds no dependency and opens no port. An adapter builder accepts an optional `http_client` for this. Default taken, not vetoed. | 2026-11-09 |
 | D32 | Dependency pins | Latest release on PyPI at the time of the check, unless it cannot be used. Approved on 2026-11-09: `anthropic` 2.6.0, `openai` 3.46.0, `PyYAML` 6.0.3, `httpx2` 2.16.0. | 2026-11-09 |
 | D33 | Context window per alias (O13) | Each alias has a `context_window`, in tokens, in config. `validate()` raises `ConfigError` for an alias that has none. | 2026-11-09 |
-| D34 | Prompt-size pre-check (O13) | Before any provider call, `complete` estimates the prompt size locally and compares it with the alias's `context_window`. The estimate is the number of characters of `system` and of every message, divided by 4 and rounded up. It adds no dependency. When the estimate is over the window, `complete` raises `ContextOverflow` at once (section 4, D13): no provider call, no `Attempt`, no `on_usage` event, no failover. The estimate is not a usage figure (D14). The module is `precheck.py`. `complete` (B4) calls it. | 2026-11-09 |
+| D34 | Prompt-size pre-check (O13) | Before any provider call, `complete` estimates the prompt size locally and compares it with the alias's `context_window`. The estimate is the number of characters of `system` and of every message, divided by 4, with 10% headroom (D37), and rounded up. It adds no dependency. When the estimate is over the window, `complete` raises `ContextOverflow` at once (section 4, D13): no provider call, no `Attempt`, no `on_usage` event, no failover. The estimate is not a usage figure (D14). The module is `precheck.py`. `complete` (B4) calls it. | 2026-11-09 |
 | D35 | `context_window` values | `default` and `deep` are set to 272000 tokens. `planner` is set to 1000000 tokens. Their primary is `${ANTHROPIC_MODEL}`, whose limit the gateway's Models API reports as 1000000 for `claude-advantage-assist` (read on 2026-11-09). A shared window is the smaller of the primary's and the fallback's limits (D35). The fallback of `default` and `deep` is `<model id>` in the sample, unmapped in the repo. The owner chose 272000, the smallest `max_input_tokens` the gateway reports for a GPT model (`gpt-5.1`, read on 2026-11-09), so the window holds for any GPT fallback. A fallback pinned to `gpt-advantage-assist` (1000000) would allow 1000000. | 2026-11-09 |
 | D36 | Connection errors (O14) | A refused, reset or otherwise failed connection, with no HTTP response, is class `timeout`. It retries 2 times, then fails over. Both adapters do this. Section 4 had no class for it. | 2026-11-09 |
+| D37 | Pre-check headroom (O13) | The estimate adds 10% headroom: `ceil(characters * 110 / 400)`, an integer calculation. The estimate counts characters divided by 4, and that undercounts code and non-English text. The owner approved this on 2026-11-09 as recommended. | 2026-11-09 |
+| D38 | Usage callback errors | An exception raised inside an `on_usage` callback is caught. The library logs the exception type only, never its message, and returns the response. A broken observer does not lose a good response or a usage event that was already recorded. Approved 2026-11-09 as recommended. | 2026-11-09 |
+| D39 | Non-SDK exceptions in `classify` | When `classify` gets an exception that is not from its SDK, it re-raises that exception as it is. It does not convert it to `TypeError`. Both adapters do this. A non-SDK exception is a bug in the caller or the library, so it should not be hidden. Approved 2026-11-09 as recommended. | 2026-11-09 |
+| D40 | Core factory | `build_core(config, adapters)` builds a `Core` from a `Config`. `build_adapters(config, http_client)` builds one adapter per provider from its `wire_api`. `Core.complete` stays the entry point, and `build_core` is the way to construct it from configuration. Approved 2026-11-09 as recommended. | 2026-11-09 |
+| D41 | HTTP 404 | A 404 is `invalid_request`. It is raised at once, with no retry and no failover (D20). Both adapters do this. Approved 2026-11-09 as recommended. | 2026-11-09 |
+| D42 | Anthropic default `max_tokens` (section 2) | When the caller gives no `max_output_tokens`, the Anthropic adapter sends `max_tokens` 4096, because the Messages API requires the field. The value is the smallest safe default. Approved 2026-11-09 as recommended. | 2026-11-09 |
 
 ## 1. Interface
 
@@ -97,6 +103,7 @@ UsageEvent: { alias, provider, model, usage?, latency_ms, outcome }
 - `attempts[]` lists every provider call in order, with its outcome. Failover is visible to the caller.
 - `outcome` is `success` or the name of the error class.
 - `usage` is absent from a `UsageEvent` when the provider reports none (D14).
+- `max_output_tokens` has no default in this section. The Anthropic Messages API requires `max_tokens`, so the Anthropic adapter sends 4096 when the caller gives none (D42).
 - The `Request` has no `metadata{}` in v1 (D22). Adding a field later does not break callers.
 - The cached-token fields are optional because providers report them in different ways.
 - Usage field names, read from the pinned SDK source (T3, verified by reading, not run). Anthropic: `usage.input_tokens`, `usage.output_tokens`, `usage.cache_read_input_tokens` and `usage.cache_creation_input_tokens`. The last two are optional. Responses (OpenAI and Gemini): `usage.input_tokens`, `usage.output_tokens`, `usage.input_tokens_details.cached_tokens` and `usage.input_tokens_details.cache_write_tokens`. `Response.usage` is optional on the Responses wire. When the SDK gets no usage, it sets `None` and does not raise, unless strict response validation is on (D14).
@@ -257,7 +264,7 @@ A refusal is not an exception. The library returns it with `stop_reason=refusal`
 
 ### 8.2 Behaviour tests
 
-No test exists yet. The names are proposed. AT-1 to AT-5 come from the first draft of the requirements. AT-6 to AT-14 come from the decisions in this file. Every test runs against a mock HTTP layer (D31) and needs no real key.
+Each test exists under the name below. AT-1 to AT-5 come from the first draft of the requirements. AT-6 to AT-14 come from the decisions in this file. The end-to-end tests are in `tests/test_conformance.py`. Each one loads a YAML file with `load_config`, builds the core with `build_core` and the real adapters, and calls `complete` through a mock HTTP layer (D31). Each one needs no real key. The unit tests for the same behaviour are in `tests/test_core.py` and the adapter test files.
 
 | ID | Proposed name | What it proves |
 |---|---|---|
@@ -274,7 +281,7 @@ No test exists yet. The names are proposed. AT-1 to AT-5 come from the first dra
 | AT-11 | `test_retry_after_is_capped` | A 429 with `Retry-After` of 20 s waits 20 s. A 429 with `retry-after-ms` or an HTTP date waits the same time (D29). A 429 with `Retry-After` over 60 s fails over at once with no wait (D21). A value that cannot be parsed gives the schedule step. The test uses a fake clock. |
 | AT-12 | `test_concurrent_complete_calls_are_independent` | Several threads call `complete` at once. Each call keeps its own counters and `attempts[]`, and `on_usage` fires once per attempt (D23). Each thread uses its own SDK client (D30). |
 | AT-13 | `test_load_config_reads_yaml_path` | `load_config(path)` reads the given file and resolves `${VAR}`. It does not search for a file (D24). |
-| AT-14 | `test_prompt_over_window_raises_before_any_provider_call` | A prompt whose estimate is over the alias's `context_window` raises `ContextOverflow` with that limit. The mock transport sees no request, the fallback is not tried, `attempts[]` is empty of provider calls and `on_usage` does not fire (D34). The estimator itself is covered by `tests/test_precheck.py`, which exists. |
+| AT-14 | `test_prompt_over_window_raises_before_any_provider_call` | A prompt whose estimate (with the 10% headroom of D37) is over the alias's `context_window` raises `ContextOverflow` with that limit. The mock transport sees no request, the fallback is not tried, `attempts[]` is empty of provider calls and `on_usage` does not fire (D34). The estimator itself is covered by `tests/test_precheck.py`, which exists. |
 
 The Gemini live check (D25) is not an acceptance test, because a test never calls a real provider. It is `scripts/check_gemini_usage.py`, run by hand with a real key. It records only the names of the usage keys, never values. It passed on 2026-11-09 (T4).
 
@@ -341,9 +348,15 @@ The owner answered O1 to O13 on 2026-11-09. Each answer is a decision in the Dec
 | O7 | Gemini usage fields | D25: map them, with a live check | Confirmed on the configured endpoint (T4). A non-zero cached count was not seen. |
 | O8 | Specialists | D26: not blocking | None |
 | O9 | A 429 that does not clear | D27: keep the `rate_limited` schedule. A spent quota costs up to 65 s per provider before failover. | None |
-| O10 | Other HTTP statuses | D28: the mapping in section 4 | The 413 body test is unverified, like the other overflow tests (F3). |
+| O10 | Other HTTP statuses | D28: the mapping in section 4 | The overflow phrases are partly verified (F3). |
 | O11 | `Retry-After` forms | D29: all three, capped at 60 s | The date form needs a clock. AT-11 covers it. |
 | O12 | SDK client thread safety | D30: one client per thread | The cost is one connection pool per thread. Not measured. |
 | O13 | Context window per alias | D33: `context_window` per alias, required by `validate()`. D34: `complete` pre-checks the prompt with a local estimate (characters divided by 4) and raises `ContextOverflow`. D35: 272000 for `default` and `deep`, 1000000 for `planner`. The fallback's limit is the one the owner chose the window from (D35). | The fallback model is not named in the repo, so its real limit is unknown (D35). The estimate is rough: it can be off in either direction, and a model's tokenizer is not known to the library. Whether to add a safety margin to the estimate is not decided. |
 
-Other unverified items: the Mermaid diagram in section 5 (`mmdc` is not installed), and the context-overflow body that real servers send (F3). T3 read the SDK source and did not run it.
+Live probe of F3 (2026-11-09, one request per provider, a prompt of about 4 MB, 400 or the reply shape recorded, no body text kept):
+
+- Anthropic: HTTP 400, `type` `invalid_request_error`, a message that contains "prompt is too long". Verified. The adapter's phrase is now that one phrase only.
+- OpenAI (`gpt-5.1` on the gateway): HTTP 400, `code` "400" (not `context_length_exceeded`), `type` `invalid_request_error`, a message that contains "context window". Verified: the Responses adapter matches "context window". The code marker stays as an unverified guess.
+- Gemini (`gemini-3.5-flash`): the 4 MB prompt was accepted. The reply was `incomplete`, not an error. Its overflow body is still unknown (F3 open). The Gemini overflow markers are unverified guesses.
+
+Other unverified items: the Mermaid diagram in section 5 (`mmdc` is not installed). T3 read the SDK source and did not run it.

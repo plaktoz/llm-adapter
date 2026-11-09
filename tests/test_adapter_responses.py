@@ -269,6 +269,7 @@ def test_classify_timeout_and_connection_error() -> None:
     "error",
     [
         {"code": "context_length_exceeded", "message": "too long"},
+        {"code": "400", "message": "Input exceeds the context window of this model."},
         {"type": "invalid_request_error", "message": "Input exceeds the context window."},
     ],
 )

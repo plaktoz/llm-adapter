@@ -19,9 +19,10 @@ CLIENT_TIMEOUT_SECONDS = 30.0
 # and gives no default, so this is the smallest safe choice (listed in the B5 report).
 DEFAULT_MAX_OUTPUT_TOKENS = 4096
 
-# Neither the SDK nor the spec defines an overflow body (requirements section 4, F3). These
-# phrases are written from the SDK docstring's advice to read the body, not from a real reply.
-_OVERFLOW_PHRASES = ("prompt is too long", "context window", "context length")
+# Verified by a live probe on 2026-11-09 (requirements F3): an over-window prompt returns HTTP
+# 400, type invalid_request_error, and a message that contains "prompt is too long". The probe
+# recorded the shape only, not the text. No other phrase is confirmed.
+_OVERFLOW_PHRASES = ("prompt is too long",)
 
 
 def build_client(
@@ -89,8 +90,8 @@ class AnthropicAdapter:
             # Refused or reset connections. Section 4 has no class for them, so they take
             # timeout (D36), as the Responses adapter does.
             return ErrorClass.TIMEOUT
-        # Not an SDK error means a bug in this adapter. Name only the type, never the message.
-        raise TypeError(f"unexpected exception type: {type(exc).__name__}")
+        # Not an SDK error means a bug elsewhere. Re-raise it as it is (D39).
+        raise exc
 
 
 def _usage(usage: anthropic.types.Usage | None) -> Usage | None:

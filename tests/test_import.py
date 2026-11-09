@@ -5,6 +5,9 @@ import pytest
 MODULES = [
     "llm_adapter",
     "llm_adapter.core",
+    "llm_adapter.factory",
+    "llm_adapter.config",
+    "llm_adapter.precheck",
     "llm_adapter.types",
     "llm_adapter.adapters",
     "llm_adapter.adapters.anthropic",

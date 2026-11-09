@@ -16,11 +16,13 @@ from llm_adapter.types import ErrorClass, Request, Response, Usage
 
 SDK_TIMEOUT = 30.0
 
-# Unverified (requirements section 4, F3): the SDK does not separate a context overflow from any
-# other 400. These markers are what OpenAI is known to send and a guess for Gemini. A real
-# fixture must confirm them.
+# The SDK does not separate a context overflow from any other 400 (requirements section 4, F3).
+# A live probe on 2026-11-09 showed that OpenAI sends HTTP 400 with code "400" (not
+# context_length_exceeded) and a message that contains "context window". That marker is verified.
+# The code and the other markers are guesses. Gemini accepted a 4 MB prompt, so its overflow
+# shape is still unknown.
 _OVERFLOW_CODES = frozenset({"context_length_exceeded"})
-_OVERFLOW_MARKERS = ("context length", "context window", "maximum context", "too many tokens")
+_OVERFLOW_MARKERS = ("context window", "context length", "maximum context", "too many tokens")
 
 
 def build_client(

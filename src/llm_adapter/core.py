@@ -8,6 +8,7 @@ a model ID or a secret.
 from __future__ import annotations
 
 import dataclasses
+import logging
 import math
 import threading
 import time
@@ -32,6 +33,8 @@ from .types import (
     Usage,
     UsageEvent,
 )
+
+_log = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT_S = 30.0
 RETRY_AFTER_CAP_S = 60.0
@@ -249,4 +252,8 @@ class Core:
         with self._lock:
             callbacks = tuple(self._callbacks)
         for callback in callbacks:
-            callback(event)
+            try:
+                callback(event)
+            except Exception as exc:
+                # A broken observer must not lose a good response (D38). Log the type only.
+                _log.warning("on_usage callback raised %s", type(exc).__name__)
