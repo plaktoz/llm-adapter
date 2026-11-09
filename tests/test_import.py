@@ -8,9 +8,7 @@ MODULES = [
     "llm_adapter.types",
     "llm_adapter.adapters",
     "llm_adapter.adapters.anthropic",
-    "llm_adapter.adapters.openai",
-    "llm_adapter.adapters.gemini",
-    "llm_adapter.adapters.openai_compat",
+    "llm_adapter.adapters.responses",
 ]
 
 
