@@ -1,6 +1,6 @@
 # llm-adapter
 
-An in-process Python library that gives UMAS code one interface for calling LLMs across providers. These terms are the vocabulary of the requirements and the code.
+An in-process Python library that gives application code one interface for calling LLMs across providers. These terms are the vocabulary of the requirements and the code.
 
 ## Language
 
@@ -30,12 +30,12 @@ _Avoid_: Call, try
 
 **Usage event**:
 The report that the library sends to `on_usage` for each attempt. It carries counts and no content.
-_Avoid_: Usage record (a record belongs to `token-ledger`)
+_Avoid_: Usage record (a record belongs to the caller's usage ledger)
 
 **Error class**:
 A named group of provider failures that share one retry and failover policy.
 _Avoid_: Error type
 
 **Caller**:
-UMAS code that sends a `Request` to the library.
+Application code that sends a `Request` to the library.
 _Avoid_: Client, consumer
