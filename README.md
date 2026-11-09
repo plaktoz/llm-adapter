@@ -57,6 +57,7 @@ print(response.text, response.attempts)
 | `src/llm_adapter/adapters/responses.py` | The one Responses adapter that serves OpenAI and Gemini (ADR 0001). The SDK's retries are off (AT-6) |
 | `tests/test_conformance.py` | The end-to-end suite, AT-1 to AT-14 (section 8.2) |
 | `tests/` | The other tests. Provider behaviour is tested against a mock HTTP layer |
+| `scripts/check_gemini_usage.py` | The by-hand Gemini live check (D25). It prints only the names of the usage fields, never values |
 | `docs/requirements.md` | The requirements and the decisions. This is the single source |
 | `docs/adr/` | Architecture decision records |
 | `GLOSSARY.md` | The vocabulary of the requirements and the code |
