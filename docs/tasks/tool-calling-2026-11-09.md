@@ -2,7 +2,7 @@
 
 Date: 2026-11-09
 Playbook: `.agents/playbooks/togaf-feature-delivery.md`
-Status: Step 1 approved. Step 3 (design) in progress.
+Status: Step 1 approved. Step 3 (design) done, see `docs/adr/0002-tool-calling.md`. Step 4 next.
 
 ## Approval
 
@@ -82,9 +82,12 @@ Task cards are written in Step 4, after the design is approved.
 
 - [x] **Step 1. Owner approves the goal, the out-of-scope list and the done condition.**
 - [x] Step 2. Understand the affected code. Done above.
-- [ ] Step 3. Design with `/architect`, ADR, owner approves.
-  - In progress (2026-11-09). Three design candidates run in parallel, read-only on the repo, each writing to its own scratch folder under `/tmp/sketch-tools/`. The `opus` and `fable` models were rejected by the gateway (HTTP 400 and 403). The gateway does not allow a change of Claude model, so this is now a rule in `AGENTS.md` (section 3). All three candidates now run on the session model, each with a different starting shape to keep them distinct: content blocks, typed turns, and the smallest delta (optional fields on `Message`). I launched the third on `sonnet` first, which breaks the rule. I stopped it and relaunched it with no model set.
-  - Next: compare the three against the design red flags, synthesise one design, write the ADR as `docs/adr/0002-tool-calling.md`, then commit the sketch. Under the blanket approval, no owner checkpoint is needed before Step 4.
+- [x] Step 3. Design with `/architect`, ADR, owner approves.
+  - Done (2026-11-09). Three candidates were written read-only, each on the session model with a different starting shape: content blocks, typed turns, and the smallest delta. The synthesis is in `docs/adr/0002-tool-calling.md`. It takes the typed-turn base, keeps `Message` for text turns, and grafts `UnparsedArguments` and `repr=False` from the other candidates.
+  - The sketches stay in `/tmp/sketch-tools/`, not in the repo. The ADR is the record. This changes the earlier plan to commit the sketch.
+  - Owner approval: covered by the blanket approval. No separate checkpoint was asked.
+  - Deviations from the Step 2 defaults, decided here: a caller bug raises `ValueError`, not `InvalidRequest`. `as_turn()` refuses unparsed arguments, so the caller re-asks.
+  - Next: Step 4, the task cards. It waits for this ADR, because the cards cite its decisions.
 - [ ] Step 4. Task cards.
 - [ ] Step 5. Build.
 - [ ] Step 6. Verify and review.
