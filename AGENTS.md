@@ -2,7 +2,7 @@
 
 Shared instructions for every coding agent that works in this repo (Claude Code, Codex CLI and others). `CLAUDE.md` imports this file, so there is one copy.
 
-`llm-adapter` is an in-process Python library. It gives UMAS code one interface for calling LLMs across providers, with a defined retry policy, bounded failover and normalised usage reporting. It is not a proxy or gateway server. Read `docs/handoff-from-llm-gateway-2026-11-09.md` for the requirements and `README.md` for the layout and commands.
+`llm-adapter` is an in-process Python library. It gives UMAS code one interface for calling LLMs across providers, with a defined retry policy, bounded failover and normalised usage reporting. It is not a proxy or gateway server. Read `docs/requirements.md` for the requirements, `GLOSSARY.md` for the vocabulary and `README.md` for the layout and commands. `docs/handoff-from-llm-gateway-2026-11-09.md` is frozen history: do not edit it.
 
 ## Conventions
 
@@ -59,12 +59,12 @@ The session can stop at any time: tokens run out, or an endpoint fails. Another 
 
 ### 6. Check the spec against its callers
 
-Before the build task list is written, one assessor subagent checks the spec against the callers in section 3 of the handoff. Fix or record each gap it finds.
+Before the build task list is written, one assessor subagent checks the spec against the callers in section 9 of `docs/requirements.md`. Fix or record each gap it finds.
 
 ## Testing
 
 - Provider behaviour is tested against a mock server. A test never calls a real provider and never needs a real key.
-- The behaviour tests in section 5.2 of the handoff are the acceptance tests. Each one has a named test.
+- The behaviour tests in section 8.2 of `docs/requirements.md` are the acceptance tests. Each one has a named test.
 - Run `uv run pytest`, `uv run ruff check .` and `uv run ruff format --check .` before you call a task done.
 
 ## Documentation

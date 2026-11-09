@@ -34,12 +34,14 @@ Expected result: `pytest` passes 8 import tests, and both `ruff` commands report
 | `src/llm_adapter/types.py` | `Request`, `Response`, `Usage`, `Attempt` and the error classes |
 | `src/llm_adapter/adapters/` | One file per provider: `anthropic`, `openai`, `gemini`, `openai_compat` |
 | `tests/` | Tests. Provider behaviour is tested against a mock server |
-| `docs/requirements.md` | The requirements and the decisions |
+| `docs/requirements.md` | The requirements and the decisions. This is the single source |
+| `docs/adr/` | Architecture decision records |
+| `GLOSSARY.md` | The vocabulary of the requirements and the code |
 | `docs/tasks/` | Task lists, with the state of each task |
-| `docs/handoff-from-llm-gateway-2026-11-09.md` | The source requirements, from agentzero-v2-dev |
+| `docs/handoff-from-llm-gateway-2026-11-09.md` | The first source of the requirements, from agentzero-v2-dev. Frozen history |
 | `AGENTS.md` | Shared instructions for every coding agent. `CLAUDE.md` imports it |
 | `.agents/playbooks/` | Delivery playbooks, copied from agent-garage |
 
 ## Next steps
 
-The owner decides streaming in v1 and the Gemini path. Then the requirements and the spec are written, and a task list is made. See `docs/tasks/scaffold-2026-11-09.md`.
+The owner has decided the v1 scope, and `docs/requirements.md` records it. The owner must approve the requirements and answer the open items in section 11. Then the spec is written, the callers are assessed, and a task list is made. See `docs/tasks/scaffold-2026-11-09.md`.
