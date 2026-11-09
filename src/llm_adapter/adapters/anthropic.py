@@ -86,9 +86,9 @@ class AnthropicAdapter:
         if isinstance(exc, anthropic.APITimeoutError):
             return ErrorClass.TIMEOUT
         if isinstance(exc, anthropic.APIConnectionError):
-            # Refused or reset connections. The spec has no class for them (section 4 gap), so
-            # they take server_error, which is retryable like timeouts.
-            return ErrorClass.SERVER_ERROR
+            # Refused or reset connections. Section 4 has no class for them, so they take
+            # timeout (D36), as the Responses adapter does.
+            return ErrorClass.TIMEOUT
         # Not an SDK error means a bug in this adapter. Name only the type, never the message.
         raise TypeError(f"unexpected exception type: {type(exc).__name__}")
 

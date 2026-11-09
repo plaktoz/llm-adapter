@@ -61,6 +61,7 @@ Note: decision D3 refines the "Providers" line. Gemini goes through the OpenAI S
 | D33 | Context window per alias (O13) | Each alias has a `context_window`, in tokens, in config. `validate()` raises `ConfigError` for an alias that has none. | 2026-11-09 |
 | D34 | Prompt-size pre-check (O13) | Before any provider call, `complete` estimates the prompt size locally and compares it with the alias's `context_window`. The estimate is the number of characters of `system` and of every message, divided by 4 and rounded up. It adds no dependency. When the estimate is over the window, `complete` raises `ContextOverflow` at once (section 4, D13): no provider call, no `Attempt`, no `on_usage` event, no failover. The estimate is not a usage figure (D14). The module is `precheck.py`. `complete` (B4) calls it. | 2026-11-09 |
 | D35 | `context_window` values | `default`, `deep` and `planner` are set to 1000000 tokens. Their primary is `${ANTHROPIC_MODEL}`. The value is the `max_input_tokens` that the gateway's Models API reports for that model (`claude-advantage-assist`), read on 2026-11-09. It is a value the gateway reports, not a fact about the model family. **Open:** the fallback of `default` and `deep` is `<model id>` in the sample. The repo does not map it, so its limit is unknown. A shared window should be the smaller of the two limits, so 1000000 holds only if the fallback's limit is at least that. The owner confirms the fallback's limit or its mapping before B7. | 2026-11-09 |
+| D36 | Connection errors (O14) | A refused, reset or otherwise failed connection, with no HTTP response, is class `timeout`. It retries 2 times, then fails over. Both adapters do this. Section 4 had no class for it. | 2026-11-09 |
 
 ## 1. Interface
 
@@ -158,7 +159,7 @@ Rules:
 |---|---|---|
 | `rate_limited` | HTTP 429 | Wait 5 s, 15 s and 45 s between retries. Each wait is the larger of the schedule step and `Retry-After`, up to 60 s. `Retry-After` has three forms (D29). When `Retry-After` is over 60 s, fail over at once with no wait (D21). Then fail over. |
 | `server_error` | HTTP 5xx, including 529, and HTTP 409 (D28) | Retry 3 times with no wait. Then fail over. |
-| `timeout` | No response within `timeout`, or HTTP 408 (D28). The default is 30 s. | Retry 2 times. Then fail over. |
+| `timeout` | No response within `timeout`, a refused or reset connection (D36), or HTTP 408 (D28). The default is 30 s. | Retry 2 times. Then fail over. |
 | `auth` | HTTP 401 or 403 | Never retry. Never fail over. Raise `AuthError` at once. |
 | `context_overflow` | The prompt is over the model limit, by the local estimate before the call (D34) or by the provider's reply. | Do not retry. Do not fail over. Raise `ContextOverflow`. The caller shrinks the input. |
 | `invalid_request` | HTTP 400 that is not a context overflow, HTTP 422, and HTTP 413 that is not a context overflow (D28) | Do not retry. Do not fail over. Raise `InvalidRequest` at once (D20). |

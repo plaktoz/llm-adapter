@@ -285,7 +285,7 @@ def test_classify_timeout_error() -> None:
     assert adapter.classify(info.value) is ErrorClass.TIMEOUT
 
 
-def test_classify_connection_error_is_server_error() -> None:
+def test_classify_connection_error_is_timeout() -> None:
     def refuse(request: httpx2.Request) -> httpx2.Response:
         raise httpx2.ConnectError("refused", request=request)
 
@@ -293,7 +293,7 @@ def test_classify_connection_error_is_server_error() -> None:
     with pytest.raises(anthropic.APIConnectionError) as info:
         adapter.complete(_request(), MODEL, 30.0)
     assert not isinstance(info.value, anthropic.APITimeoutError)
-    assert adapter.classify(info.value) is ErrorClass.SERVER_ERROR
+    assert adapter.classify(info.value) is ErrorClass.TIMEOUT
 
 
 def test_classify_rejects_a_non_sdk_exception() -> None:
