@@ -24,7 +24,7 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Expected result: `pytest` passes 156 tests, and both `ruff` commands report no problem.
+Expected result: `pytest` passes 175 tests, and both `ruff` commands report no problem.
 
 To use the library, write a YAML config (the shape is in `docs/requirements.md` section 3), set the environment variables it names, then:
 
@@ -56,6 +56,7 @@ print(response.text, response.attempts)
 | `src/llm_adapter/adapters/anthropic.py` | The Anthropic Messages adapter. The SDK's retries are off (AT-6) |
 | `src/llm_adapter/adapters/responses.py` | The one Responses adapter that serves OpenAI and Gemini (ADR 0001). The SDK's retries are off (AT-6) |
 | `tests/test_conformance.py` | The end-to-end suite, AT-1 to AT-14 (section 8.2) |
+| `tests/test_sdk_drift.py` | The SDK drift check: fails when a pin bump moves a fact the spec rests on (D43) |
 | `tests/` | The other tests. Provider behaviour is tested against a mock HTTP layer |
 | `scripts/check_gemini_usage.py` | The by-hand Gemini live check (D25). It prints only the names of the usage fields, never values |
 | `docs/requirements.md` | The requirements and the decisions. This is the single source |
@@ -67,4 +68,4 @@ print(response.text, response.attempts)
 
 ## Next steps
 
-The owner has decided the v1 scope and the open items. `docs/requirements.md` records them. The build task list is `docs/tasks/build-2026-11-09.md`. Still open: the live overflow probe that replaces the guessed overflow bodies (F3), and a CI workflow.
+The owner has decided the v1 scope and the open items. `docs/requirements.md` records them. The build task list is `docs/tasks/build-2026-11-09.md`. CI runs the checks on Linux, Windows and macOS. Still open: the Gemini overflow body (F3, accepted as a risk in D45), and tool calling for specialists (D44, v2).
