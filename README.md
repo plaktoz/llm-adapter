@@ -59,6 +59,7 @@ print(response.text, response.attempts)
 | `tests/test_sdk_drift.py` | The SDK drift check: fails when a pin bump moves a fact the spec rests on (D43) |
 | `tests/` | The other tests. Provider behaviour is tested against a mock HTTP layer |
 | `scripts/check_gemini_usage.py` | The by-hand Gemini live check (D25). It prints only the names of the usage fields, never values |
+| `scripts/check_tool_wire.py` | The by-hand tool-calling probe (ADR 0002). It prints only verdicts, status codes and error type names. It has not been run |
 | `docs/requirements.md` | The requirements and the decisions. This is the single source |
 | `docs/adr/` | Architecture decision records |
 | `GLOSSARY.md` | The vocabulary of the requirements and the code |
