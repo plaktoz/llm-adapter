@@ -29,6 +29,7 @@ The history is a sequence of turns. Each adapter maps the turns to its own wire.
 - `as_turn()` raises `ValueError` when a call's arguments are `UnparsedArguments`. The caller asks the model again. It does not replay the raw text.
 - On Anthropic, a `Message` with role user that directly follows `ToolResults` joins the same user message, after the `tool_result` blocks.
 - On Responses, `strict` is sent as `false`. A failed result has `Error: ` in front of its text, because the output item has no error flag.
+- On Responses, a replayed `function_call` item carries `call_id` and no item `id`.
 
 ## Considered options
 
@@ -45,15 +46,33 @@ The history is a sequence of turns. Each adapter maps the turns to its own wire.
 - `stop_reason` and `tool_calls` can disagree on a refusal or a max-tokens stop. The docstring of `Response` states the rule.
 - The new public names are `Tool`, `ToolCall`, `ToolResult`, `ToolResults`, `AssistantToolCalls`, `UnparsedArguments` and `STOP_TOOL_USE`. The wire dicts, SDK types, argument parsing and error prefix stay private.
 
+## Open questions decided on 2026-11-13
+
+The owner chose one option for each open question. Every choice keeps the design above. No probe has run, so each choice rests on a fact that nobody has checked.
+
+| Question | Choice | Fallback if the probe shows a rejection |
+|---|---|---|
+| Q1. Must `tool_result` come before text in an Anthropic user message? | Merge a user `Message` that follows `ToolResults` into the same user message. Put the `tool_result` blocks first. | Forbid that sequence in `check_history`. Use separate user messages only if the probe also shows that two user messages in a row are accepted. |
+| Q2. Does Anthropic accept a `tool_use` id that another provider minted? | Keep ids unchanged on every wire. | Rewrite ids for the target wire with a pure function. The probe must also find the id format that each wire accepts. Refusing failover would contradict done item 5. |
+| Q3. Does Responses accept a replayed `function_call` with no `id`? | Send `call_id` and omit the item `id`. | Send the item `id` with the same value as `call_id`. |
+| Q4. What does the Responses tool definition say for `strict`? | Send `strict: false`. | Send `strict: null`, or omit the key. |
+
+- Q2 applies in both directions. A Responses `call_id` that Anthropic minted is the same question as an Anthropic `tool_use` id that Responses minted.
+- The `Error: ` prefix on a failed result is not an open question. The ADR fixes it.
+- A rejected shape returns HTTP 400. The core classifies that as `invalid_request` and raises `InvalidRequest` at once, with no failover (D20). A rejection is therefore a loud failure, not a silent one.
+
 ## Unverified
 
-These are checked only by the live check (done item 9), which needs the owner's key.
+Only a live probe can check these facts. The probe needs the owner's key. The script is `scripts/check_tool_wire.py`. It is written. It has not been run against any provider.
 
 - Whether the Anthropic Messages wire accepts a `tool_use` id that another provider minted.
+- Whether the Responses wire accepts a `call_id` that Anthropic minted.
 - Whether the Responses wire accepts a `function_call` item with no `id`.
-- Whether `strict: false` is the server default.
-- Whether Anthropic requires `tool_result` blocks first. The merge rule is safe either way.
-- How the Gemini endpoint answers tools on the Responses wire. Until the live check runs, Gemini is not verified.
+- Whether the endpoint accepts an explicit `strict: false`. The server default no longer matters, because the adapter always sends the value.
+- Whether Anthropic requires `tool_result` blocks first. The merge rule puts them first, so it is safe either way.
+- How the Gemini endpoint answers tools on the Responses wire. Until the live check runs, Gemini is not verified. The script does not cover Gemini.
+
+A probe result holds for the endpoint that the probe named. In the owner's environment, `ANTHROPIC_BASE_URL` points at a gateway. A gateway can answer differently from the vendor API. Each result must name its endpoint, and a result must not be applied to another endpoint.
 
 ## Source
 

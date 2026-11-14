@@ -2,7 +2,7 @@
 
 Date: 2026-11-09
 Playbook: `.agents/playbooks/togaf-feature-delivery.md`
-Status: Step 1 approved. Step 3 (design) done, see `docs/adr/0002-tool-calling.md`. Step 4 next.
+Status: Step 1 approved. Step 3 (design) done, see `docs/adr/0002-tool-calling.md`. Step 3a done: four open questions decided and the probe script written, not run. Step 4 next.
 
 ## Approval
 
@@ -88,6 +88,21 @@ Task cards are written in Step 4, after the design is approved.
   - Owner approval: covered by the blanket approval. No separate checkpoint was asked.
   - Deviations from the Step 2 defaults, decided here: a caller bug raises `ValueError`, not `InvalidRequest`. `as_turn()` refuses unparsed arguments, so the caller re-asks.
   - Next: Step 4, the task cards. It waits for this ADR, because the cards cite its decisions.
+- [x] Step 3a. Decide the four open questions and write the probe (2026-11-13).
+  - Decided by the owner on 2026-11-13: Q1 merge with `tool_result` first. Q2 keep ids unchanged. Q3 omit the item `id`. Q4 send `strict: false`. The ADR section "Open questions decided on 2026-11-13" records each choice and its fallback.
+  - Approved for this step only: record the decisions, and write the probe script without running it. The approval does not cover Step 4 or any later step.
+  - Written: `scripts/check_tool_wire.py`. It covers Q1 to Q4 on the Anthropic wire and on the Responses wire. It does not cover Gemini.
+  - Verified without a network: `ruff check` and `ruff format --check` pass on the script. An offline harness that replaces the HTTP call passed 29 checks. The harness shows three things. The script builds the intended bodies. It reads the right verdicts. It prints no key, prompt text or error message. The harness is not in the repo. It says nothing about how any provider answers.
+  - Not verified: how any provider answers. No probe has run.
+- [ ] **Owner action: run the probe.** Run it once for each wire with the owner's key, and record the output in this file. Every result must name its endpoint. The script prints it. In this environment `ANTHROPIC_BASE_URL` points at a gateway, so a result from it can differ from the vendor API.
+  - `uv run python scripts/check_tool_wire.py --list` shows the cases and sends nothing.
+  - `uv run python scripts/check_tool_wire.py anthropic <model id>` needs `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN`.
+  - `uv run python scripts/check_tool_wire.py responses <model id>` needs `OPENAI_BASE_URL` and `OPENAI_API_KEY`.
+  - Status: pending. This work merged before the probe ran. Every provider-behaviour claim in the ADR is unverified until a result is recorded here.
+  - Endpoint caveat: `ANTHROPIC_BASE_URL` points at `api.servicesessentials.ibm.com`. Whether that host accepts a Bearer token on `/v1/messages` is untested. A result from it holds for that host only. It does not hold for the vendor API.
+  - Why the agent does not run it: it needs the owner's key, and the owner asked to run it.
+  - If a chosen case is REJECTED, the ADR lists the fallback. Change the decision here before Step 4 depends on it.
+  - Step 4 can start without the probe result. The result decides the shape of the Anthropic merge and the id handling. Check it before Step 5 writes those parts.
 - [ ] Step 4. Task cards.
 - [ ] Step 5. Build.
 - [ ] Step 6. Verify and review.
